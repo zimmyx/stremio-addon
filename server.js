@@ -29,7 +29,8 @@ const CONFIG = {
   debridPath: "",
 
   // Timeout (ms) untuk setiap source supaya satu source down tak halang yang lain
-  timeout: 8000,
+  // Render free tier cold-start lambat, jadi naikkan ke 20s
+  timeout: 20000,
 };
 
 /* ============================================================
@@ -218,12 +219,14 @@ app.get("/stream/:type/:id.json", async (req, res) => {
   const title = req.query.title || "";
 
   const tasks = [
-    fetchTorrentio(type, imdbId, season, episode).catch(() => []),
-    fetchTPB(type, imdbId, title, season, episode).catch(() => []),
-    fetchElf(type, imdbId, season, episode).catch(() => []),
+    fetchTorrentio(type, imdbId, season, episode).catch((e) => { console.log("[torrentio] fail:", e.message); return []; }),
+    fetchTPB(type, imdbId, title, season, episode).catch((e) => { console.log("[tpb] fail:", e.message); return []; }),
+    fetchElf(type, imdbId, season, episode).catch((e) => { console.log("[elf] fail:", e.message); return []; }),
   ];
 
   const [torrentio, tpb, elf] = await Promise.all(tasks);
+
+  console.log(`[/stream] ${type}/${imdbId} -> torrentio:${torrentio.length} tpb:${tpb.length} elf:${elf.length}`);
 
   const all = [...torrentio, ...tpb, ...elf];
 
