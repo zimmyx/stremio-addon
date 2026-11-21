@@ -254,6 +254,30 @@ app.get("/", (req, res) => {
   `);
 });
 
+/* Debug endpoint — test setiap source secara berasingan */
+app.get("/debug", async (req, res) => {
+  const imdb = req.query.imdb || "tt0111161";
+  const title = req.query.title || "The Shawshank Redemption";
+  const out = {};
+
+  try {
+    const t = await fetchTorrentio("movie", imdb, 1, 1);
+    out.torrentio = { ok: true, count: t.length };
+  } catch (e) { out.torrentio = { ok: false, error: e.message }; }
+
+  try {
+    const t = await fetchTPB("movie", imdb, title, 1, 1);
+    out.tpb = { ok: true, count: t.length };
+  } catch (e) { out.tpb = { ok: false, error: e.message }; }
+
+  try {
+    const t = await fetchElf("movie", imdb, 1, 1);
+    out.elf = { ok: true, count: t.length };
+  } catch (e) { out.elf = { ok: false, error: e.message }; }
+
+  res.json(out);
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n  ✅ Stremio multi-source addon running`);
   console.log(`  ➜ Manifest: ${CONFIG.baseURL}/manifest.json\n`);
